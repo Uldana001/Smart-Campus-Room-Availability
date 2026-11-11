@@ -89,6 +89,19 @@ export default function App() {
     setResult(null);
   }
 
+  function handleTimeChange(next: string) {
+    setCurrentTimeStr(next);
+    setResult(null);
+  }
+  function handleStartChange(next: string) {
+    setStartStr(next);
+    setResult(null);
+  }
+  function handleEndChange(next: string) {
+    setEndStr(next);
+    setResult(null);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -131,9 +144,9 @@ export default function App() {
             hasValidNumbers={hasValidNumbers}
             intervalValid={intervalValid}
             onRoomChange={handleRoomChange}
-            onCurrentTimeChange={setCurrentTimeStr}
-            onStartChange={setStartStr}
-            onEndChange={setEndStr}
+            onCurrentTimeChange={handleTimeChange}
+            onStartChange={handleStartChange}
+            onEndChange={handleEndChange}
             onCheck={handleCheck}
             onReset={handleReset}
             onClearFilters={handleClearFilters}
