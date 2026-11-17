@@ -204,8 +204,25 @@ describe('validateExplanation', () => {
 describe('buildFallback', () => {
   it('returns an agreeing fallback for an available room with formatMinutes output', () => {
     const text = buildFallback({ ...validInput, start: 700, end: 720 });
-    expect(text).toBe('Room Room A can be booked from 11:40 AM to 12:00 PM.');
+    expect(text).toBe('Room A can be booked from 11:40 AM to 12:00 PM.');
     expect(validateExplanation(text, true)).toBe(true);
+  });
+
+  it('returns the generic text for an available input with negative start', () => {
+    expect(
+      buildFallback({ roomLabel: 'Room A', start: -5, end: 700, isAvailable: true, reasonCodes: [] })
+    ).toBe('Explanation unavailable for this request.');
+  });
+
+  it('never prefixes the label with "Room"', () => {
+    const text = buildFallback({ ...validInput, start: 700, end: 720 });
+    expect(text).not.toContain('Room Room');
+  });
+
+  it('still contains the formatted times for valid times', () => {
+    const text = buildFallback({ ...validInput, start: 700, end: 720 });
+    expect(text).toContain('11:40 AM');
+    expect(text).toContain('12:00 PM');
   });
 
   it('never throws and returns a valid explanation for every reason code', () => {

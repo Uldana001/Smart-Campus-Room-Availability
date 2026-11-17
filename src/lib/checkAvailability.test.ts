@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkAvailability } from '/home/project/src/lib/availability.ts';
+import { checkAvailability } from './availability';
 import { SAMPLE_ROOMS } from '../data';
 import type { Room } from '../types';
 

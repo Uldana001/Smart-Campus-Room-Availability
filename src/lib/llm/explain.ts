@@ -124,20 +124,26 @@ export function buildFallback(input: ExplainInput): string {
     return GENERIC_FALLBACK;
   }
 
+  const timesArePrintable =
+    input.start >= 0 && input.start < input.end && input.end <= DAY_END_MINUTES;
+
   if (input.isAvailable) {
-    return `Room ${label} can be booked from ${formatMinutes(input.start)} to ${formatMinutes(input.end)}.`;
+    if (!timesArePrintable) {
+      return GENERIC_FALLBACK;
+    }
+    return `${label} can be booked from ${formatMinutes(input.start)} to ${formatMinutes(input.end)}.`;
   }
 
   const codes = input.reasonCodes.length > 0 ? input.reasonCodes : (['UNKNOWN'] as ReasonCode[]);
   if (codes.includes('INVALID_INTERVAL')) {
-    return `Room ${label} cannot be booked: the requested time interval is not valid.`;
+    return `${label} cannot be booked: the requested time interval is not valid.`;
   }
   const parts = codes.map((code) => FALLBACK_BY_CODE[code]);
   const cause = parts.filter((part) => part !== NEUTRAL_FALLBACK).join(' ');
   if (cause.length === 0) {
     return NEUTRAL_FALLBACK;
   }
-  return `Room ${label} cannot be booked. ${cause}`;
+  return `${label} cannot be booked. ${cause}`;
 }
 
 export async function explainAvailability(
