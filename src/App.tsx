@@ -10,6 +10,7 @@ import { ResultCard } from '@/components/ResultCard';
 import { RoomFilters } from '@/components/RoomFilters';
 import { BookingForm } from '@/components/BookingForm';
 import { RoomDetails } from '@/components/RoomDetails';
+import { ExplanationPanel } from '@/components/ExplanationPanel';
 
 const DEFAULT_ATTENDEES = '1';
 
@@ -154,6 +155,15 @@ export default function App() {
 
           {/* Result */}
           {result && <ResultCard result={result} />}
+          {result && currentRoom && (
+            <ExplanationPanel
+              key={`${currentRoom.id}-${start}-${end}`}
+              result={result}
+              room={currentRoom}
+              start={start}
+              end={end}
+            />
+          )}
         </section>
 
         {/* Right column — room detail / timeline */}
