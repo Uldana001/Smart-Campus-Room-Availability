@@ -8,6 +8,10 @@ export function checkAvailability(
   const { start, end, currentTime } = request;
   const reasons: string[] = [];
 
+  if (![start, end, currentTime].every(Number.isFinite)) {
+    return { available: false, reasons: ['Times must be valid numbers.'] };
+  }
+
   if (start < 0) {
     reasons.push('Start time must be 0 or greater.');
   }
