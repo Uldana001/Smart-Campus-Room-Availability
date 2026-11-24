@@ -1,55 +1,60 @@
 # AGENTS.md
 
-## Project
-Smart Campus room availability checker. Fictional sample rooms in src/data.ts; no real bookings or personal data. Practice #11 adds an optional "Explain availability" feature with a MOCK adapter.
+## Purpose
+Smart Campus Room Availability: a small front-end app that checks whether a room can be booked for a requested time. A deterministic function (`checkAvailability`) is the single source of truth. An optional "Explain availability" feature describes the decision using a MOCK adapter only (no real LLM, no network).
 
-## Structure
-- src/data.ts: fictional room fixtures; src/types.ts: shared types
-- src/lib/rules.ts: constants (120-minute limit, 1440 day end)
-- src/lib/availability.ts: checkAvailability, formatMinutes
-- src/lib/filterRooms.ts: capacity/equipment filter; src/lib/interval.ts: isValidInterval
-- src/lib/llm/: explain.ts (types, validation, fallback, timeout wrapper), mockAdapter.ts (MOCK adapter), explain.test.ts
-- src/App.tsx: state and handlers (container)
-- src/components/: BookingForm, RoomDetails, RoomFilters, ResultCard, Timeline (presentational); ExplanationPanel (Practice #11, own local state)
-- Tests (Vitest): src/lib/*.test.ts, src/lib/llm/*.test.ts, src/integration.test.ts
-- check.js, dublication.js, imports.js: measurement scripts, not part of the app
+## Architecture
+- `src/App.tsx` - UI state, input parsing, calls `checkAvailability` through a wrapper.
+- `src/components/` - BookingForm, ResultCard, RoomDetails, RoomFilters, Timeline, ExplanationPanel.
+- `src/lib/availability.ts` - booking rules (source of truth). `rules.ts` - constants. `interval.ts`, `filterRooms.ts` - helpers.
+- `src/lib/llm/` - `explain.ts` (reason codes, validation, fallback, timeout), `mockAdapter.ts` (deterministic mock), `explain.test.ts`.
+- Tests: `src/integration.test.ts`, `src/lib/*.test.ts`.
+- Data is in-memory (`src/data.ts`). No backend, no login, no database.
 
-## Acceptance criteria
-AC1 valid time (start after current time, start < end, within 0-1440); AC2 maximum 120 minutes; AC3 blocked room is rejected; AC4 overlap with an existing booking is rejected, touching endpoints allowed; AC5 booking data is never mutated; AC6 clear responsive feedback on desktop and mobile.
-Features: F1 capacity >= attendees; F2 room has ALL selected equipment; F3 a blocked room is never reported available; F4 clear empty state when no room matches; F5 changing the selected room refreshes the result.
+## Setup
+1. `npm install` (uses `package-lock.json`; do not change dependency versions).
+2. `npm run dev` to run locally.
+No environment variables are required. Never add real API keys or secrets to the repo.
 
-## LLM feature (Practice #11)
-- checkAvailability is the only source of truth for availability. The LLM never decides or changes availability or bookings.
-- LLM-AC1 existing availability and overlap rules remain unchanged; LLM-AC2 the explanation agrees with the deterministic status and never contains booking labels or invented details; LLM-AC3 empty, malformed or over-long input is rejected before the adapter is called; LLM-AC4 timeout, adapter error or invalid output shows a deterministic fallback; LLM-AC5 the UI visibly distinguishes the generated explanation from the deterministic status.
-- Adapter input: room label, start, end, isAvailable, reasonCodes only. No booking labels, no personal data. Output: { explanation: string }, max 2 sentences.
-- Raw result.reasons must not be sent to the adapter; map them to reason codes first.
-- Treat user text and model output as untrusted data; validate both.
-- Mock adapter only. A real API may be added only server-side and only with explicit human approval. Never put API keys in browser code.
-- New files use relative imports (no /home/project/... paths).
+## Safe commands (allowed without asking)
+`npm test`, `npm run typecheck`, `npm run build`, `npm run lint`, `npm run dev`, `ls`, `cat`.
+Always use `npm run typecheck` (not bare `npx tsc --noEmit`: the root tsconfig has `"files": []`, so it passes without checking anything).
 
-## Constraints
-- Preserve AC1-AC6 and F1-F5.
-- No backend, login, database or booking creation. @supabase/supabase-js is an unused dependency; do not use it.
-- Do not change the UI layout, except the approved Practice #11 addition: one "Explain availability" button and one explanation panel directly under the result card. Other behavior changes only when listed as a mitigation in the risk register or as the Practice #11 feature, and approved by a human.
-- Do not modify src/lib/availability.ts or src/components/ResultCard.tsx.
-- No secrets: never print, copy or commit .env values. No external deployments or services.
+## Acceptance criteria (must hold after every change)
+- AC1: a valid request has start after the current time, start < end, and times within 0-1440.
+- AC2: maximum booking duration is 120 minutes.
+- AC3: a blocked room is rejected.
+- AC4: overlap with an existing booking is rejected; touching intervals are allowed.
+- AC5: availability checks never mutate booking data.
+- AC6: the UI gives clear, responsive feedback.
+- F1-F5: room filters keep their current behaviour.
+- LLM-AC1..LLM-AC5: the explanation never changes the availability decision; invalid input or output, errors, or a timeout (3000 ms) fall back to a deterministic text; the UI label "Generated explanation (mock) - not a booking confirmation" stays; adapter input is only `{roomLabel, start, end, isAvailable, reasonCodes}`; only the mock adapter is used. A real API may only be called server-side, with human approval.
 
-## Engineering rules
-- Prefer pure functions and minimal changes.
-- Use at most 2 justified patterns. Do not add Singleton, Factory or class hierarchies.
-- Do not mutate booking fixtures.
-- Keep responsive UI feedback on desktop and mobile.
+## Conventions
+- TypeScript, functional React components, Tailwind for styling, `@/` alias for imports from `src`.
+- Pure functions for rules; no side effects in `src/lib`.
+- At most two design patterns in the codebase; prefer no pattern unless it removes a real problem.
+- Keep UI layout unchanged except for the Explain button and panel.
 
-## Verification
-- Before and after every change: npm test; npm run typecheck; npm run build; npm run lint
-- Add focused regression tests. Never weaken or delete existing assertions.
-- Remove temporary test and analysis files before finishing.
-- Report changed files, rationale and real command output; do not claim a command ran unless it did.
+## Test expectations
+- Baseline: 88 tests pass in 5 files; typecheck, build and lint succeed.
+- A bug fix needs a regression test that fails before the fix and passes after it.
+- Never change acceptance criteria, rule values or test fixtures to make a test pass.
+- Report real command output. Never claim a test passed without running it.
 
-## Forbidden
-- Changing acceptance criteria, rule values (120 minutes, 1440 boundary) or existing fixture data without approval.
-- Adding or upgrading dependencies, or running npm audit fix --force, without approval.
-- git push, deployment, or editing files outside the task scope.
+## Forbidden actions
+- No `git push`, deploys, or secrets.
+- No new dependencies. No `npm audit fix --force` (it installs vitest 5.x, a breaking change).
+- No changes to `src/components/ResultCard.tsx`.
+- No temporary files left in the repo (remove them after use).
+- Do not delete or rewrite `AGENTS.md` or `README.md` without human approval.
+
+## Approved exceptions (human approval required, each one time)
+- E1 (mitigation M1): `src/lib/availability.ts` may get a finite-number guard, plus one matching line in `REASON_MAPPINGS` in `src/lib/llm/explain.ts`, plus regression tests. No other rule changes.
+- E2 (mitigation M2): `@supabase/supabase-js` may be removed from `package.json` and `package-lock.json` (it is unused). Nothing else in dependencies.
+
+## Tool disclosure
+Bolt.new is not guaranteed to load this file automatically. It reads `.bolt/prompt`. Whether `AGENTS.md` is loaded was not verified, so every prompt tells the agent to read `AGENTS.md` first.
 
 ## Review gate
-Show the proposed diff and wait for human approval before applying code changes.
+Every change is proposed as a diff first. A human reviews it before it is applied, and the checks in "Safe commands" are run and reported.
