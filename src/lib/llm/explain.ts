@@ -1,5 +1,6 @@
 import { DAY_END_MINUTES } from '../rules';
 import { formatMinutes } from '../availability';
+import { SENTENCE_BY_CODE } from './reasonSentences';
 
 export type ReasonCode =
   | 'INVALID_INTERVAL'
@@ -104,16 +105,7 @@ export function validateExplanation(text: string, isAvailable: boolean): boolean
 }
 
 const GENERIC_FALLBACK = 'Explanation unavailable for this request.';
-const NEUTRAL_FALLBACK = 'This time cannot be booked.';
-
-const FALLBACK_BY_CODE: Record<ReasonCode, string> = {
-  INVALID_INTERVAL: 'The requested time interval is not valid.',
-  START_NOT_AFTER_CURRENT: 'The requested start time is not in the future.',
-  TOO_LONG: 'The requested booking is too long.',
-  ROOM_BLOCKED: 'The room is currently blocked.',
-  OVERLAP: 'The requested time overlaps an existing booking.',
-  UNKNOWN: NEUTRAL_FALLBACK,
-};
+const NEUTRAL_FALLBACK = SENTENCE_BY_CODE.UNKNOWN;
 
 export function buildFallback(input: ExplainInput): string {
   if (typeof input.roomLabel !== 'string' || !Number.isInteger(input.start) || !Number.isInteger(input.end)) {
@@ -138,7 +130,7 @@ export function buildFallback(input: ExplainInput): string {
   if (codes.includes('INVALID_INTERVAL')) {
     return `${label} cannot be booked: the requested time interval is not valid.`;
   }
-  const parts = codes.map((code) => FALLBACK_BY_CODE[code]);
+  const parts = codes.map((code) => SENTENCE_BY_CODE[code]);
   const cause = parts.filter((part) => part !== NEUTRAL_FALLBACK).join(' ');
   if (cause.length === 0) {
     return NEUTRAL_FALLBACK;
